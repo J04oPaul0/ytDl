@@ -56,6 +56,8 @@ def download_media(idv, format, output_extension, tipo):
             'yt-dlp',
             '-f', "b[filesize<50M] / w",
             '--max-filesize', '50M',
+            '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
+
             '-o', output_template,
             
             url
@@ -66,6 +68,8 @@ def download_media(idv, format, output_extension, tipo):
             '-f', 'bestaudio[ext=m4a]',
             '--max-filesize', '50M',
             '--audio-format', 'mp3',
+            '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
+
             '-o', output_template,
             url
         ]
