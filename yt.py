@@ -116,7 +116,7 @@ def download_media(idv, format, output_extension, tipo):
 async def get_info(url: str )-> Video:
     ydl = YoutubeDL({"noplaylist": True, 'cookiefile':"cookies.txt"})
     info = Video()
-    yt = await extract_info(ydl, url, download=False)
+    yt = await extract_info(url, download=False)
     info.thumb = yt["thumbnail"]
     info.title = yt["title"]
     info.performer = yt.get("creator") or yt.get("uploader")
