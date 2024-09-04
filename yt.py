@@ -64,7 +64,6 @@ def extract_info(url: str, download=True, isSearch=False):
     ]
         
     result = subprocess.run(command, capture_output=True, text=True)
-    print(' '.join(command), result)
     video_info = json.loads(result.stdout)
 
     return video_info
