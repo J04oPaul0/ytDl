@@ -83,9 +83,9 @@ def download_media(idv, format, output_extension, tipo):
     if tipo == "video":
         ydl_command = [
             'yt-dlp',
-            "--username","oauth2", "--password", "''",
+            "--username","oauth2","--password", "''",
             '--no-playlist',
-            '-f', "b[filesize<50M] / w",
+            '-f', "b[filesize<50M]",
             '--max-filesize', '50M',
             '-o', output_template,
             url
