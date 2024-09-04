@@ -2,6 +2,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import httpx
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 from collections import deque
@@ -13,6 +14,8 @@ from typing import TYPE_CHECKING
 
 import asyncio
 from functools import partial, wraps
+
+from typesp.video import Video
 
 TOKEN_BOT = os.environ["YT_TOKEN_BOT"]
 
@@ -54,6 +57,7 @@ def download_media(idv, format, output_extension, tipo):
     if tipo == "video":
         ydl_command = [
             'yt-dlp',
+            '--no-playlist',
             '--cookies', 'cookies.txt',
             '-f', "b[filesize<50M] / w",
             '--max-filesize', '50M',
@@ -64,6 +68,7 @@ def download_media(idv, format, output_extension, tipo):
     else:
         ydl_command = [
             'yt-dlp',
+            '--no-playlist',
             '--cookies', 'cookies.txt',
             '-f', 'bestaudio[ext=m4a]',
             '--max-filesize', '50M',
@@ -90,6 +95,15 @@ def download_media(idv, format, output_extension, tipo):
     except Exception as e:
         return None, f"Erro inesperado: {str(e)}"
 
+async def get_info(url: str )-> Video:
+    ydl = YoutubeDL({"noplaylist": True, 'cookiefile':"cookies.txt"})
+    info = Video()
+    yt = await extract_info(ydl, url, download=False)
+    info.thumb = yt["thumbnail"]
+    info.title = yt["title"]
+    info.performer = yt.get("creator") or yt.get("uploader")
+    return info
+    
 # Processa a fila de downloads
 async def process_queue(context: ContextTypes.DEFAULT_TYPE):
     while download_queue:
@@ -105,15 +119,27 @@ async def process_queue(context: ContextTypes.DEFAULT_TYPE):
             shutil.rmtree(os.path.dirname(filename), ignore_errors=True)
         else:
             await context.bot.send_message(chat_id=chat_id, text="Download concluído! Enviando arquivo...")
+            info = await get_info(url_or_query)
             if format_type == 'video':
                 try :
-                    await context.bot.send_video(chat_id=chat_id, video=open(filename, 'rb'))
+                    await context.bot.send_video(
+                        chat_id=chat_id, 
+                        video=open(filename, 'rb'),
+                        supports_streaming=True)
                 except FileNotFoundError:
                     await context.bot.send_message(chat_id=chat_id, text="Erro ao tentar baixar!")
 
             else:
                 try:
-                    await context.bot.send_audio(chat_id=chat_id, audio=open(filename, 'rb'))
+                    thumb = io.BytesIO(httpx.get(info.thumb).content)
+                    thumb.name = "thumbnail.png"
+
+                    await context.bot.send_audio(
+                        chat_id=chat_id, 
+                        audio=open(filename, 'rb'),
+                        title=info.title,
+                        performer=info.performer,
+                        thumbnail=thumb)
                 except FileNotFoundError:
                     await context.bot.send_message(chat_id=chat_id, text="Erro ao tentar baixar!")
 
@@ -155,7 +181,7 @@ async def start_ytdl(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("Áudio (MP3) 🎵", callback_data=f"audio|{yt["id"]}|mp3|{afsize}")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Escolha o formato para download:", reply_markup=reply_markup)
+    await update.message.reply_text(f"Escolha o formato para {yt['title']}:", reply_markup=reply_markup)
 
 # Callback para manipular a escolha do usuário
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
