@@ -42,12 +42,13 @@ MAX_FILESIZE = 200000000
 @aiowrap
 def extract_info(url: str, download=True, isSearch=False):
     command = [
-        "yt-dlp", "--no-playlist", "--dump-json", "--username","oauth2" "--password", "''",
+        "yt-dlp", "--no-playlist", "--dump-json", "--username","oauth2", "--password", "''",
         url]
     
     if isSearch:
         command = [
-        "yt-dlp","--username","oauth2" "--password", "''","--default-search", url ,
+        "yt-dlp",
+        "--username","oauth2", "--password", "''","--default-search", url ,
         "--no-playlist", "--dump-json", 
         url]
 
@@ -72,7 +73,7 @@ def download_media(idv, format, output_extension, tipo):
     if tipo == "video":
         ydl_command = [
             'yt-dlp',
-            "--username","oauth2" "--password", "''",
+            "--username","oauth2", "--password", "''",
             '--no-playlist',
             '--cookies', 'cookies.txt',
             '-f', "b[filesize<50M] / w",
@@ -84,7 +85,7 @@ def download_media(idv, format, output_extension, tipo):
     else:
         ydl_command = [
             'yt-dlp',
-            "--username","oauth2" "--password", "''",
+            "--username","oauth2", "--password", "''",
             '--no-playlist',
             '--cookies', 'cookies.txt',
             '-f', 'bestaudio[ext=m4a]',
