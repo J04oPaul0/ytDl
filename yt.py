@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+import json
 import shutil
 import subprocess
 import httpx
@@ -39,8 +40,22 @@ YOUTUBE_REGEX = re.compile(
 MAX_FILESIZE = 200000000
 
 @aiowrap
-def extract_info(instance: YoutubeDL, url: str, download=True):
-    return instance.extract_info(url, download)
+def extract_info(url: str, download=True, isSearch=False):
+    command = [
+        "yt-dlp", "--no-playlist", "--dump-json", "--username oauth2 --password ''",
+        url]
+    
+    if isSearch:
+        command = [
+        "yt-dlp","--username oauth2 --password ''","--default-search", url ,
+        "--no-playlist", "--dump-json", 
+        url]
+
+    print(command)
+    result = subprocess.run(command, capture_output=True, text=True)
+    video_info = json.loads(result.stdout)
+
+    return video_info
 
 TIME_REGEX = re.compile(r"[?&]t=([0-9]+)")
 # Fila de downloads
@@ -57,6 +72,7 @@ def download_media(idv, format, output_extension, tipo):
     if tipo == "video":
         ydl_command = [
             'yt-dlp',
+            "--username oauth2 --password ''",
             '--no-playlist',
             '--cookies', 'cookies.txt',
             '-f', "b[filesize<50M] / w",
@@ -68,6 +84,7 @@ def download_media(idv, format, output_extension, tipo):
     else:
         ydl_command = [
             'yt-dlp',
+            "--username oauth2 --password ''",
             '--no-playlist',
             '--cookies', 'cookies.txt',
             '-f', 'bestaudio[ext=m4a]',
@@ -161,8 +178,6 @@ async def start_ytdl(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     url_or_query = " ".join(context.args)
-    ydl = YoutubeDL({"noplaylist": True, 'cookiefile':"cookies.txt"})
-
     match = YOUTUBE_REGEX.match(url_or_query)
 
     t = TIME_REGEX.search(url_or_query)
@@ -171,10 +186,9 @@ async def start_ytdl(update: Update, context: ContextTypes.DEFAULT_TYPE):
     vfsize = 0
 
     if match:
-        yt = await extract_info(ydl, match.group(), download=False)
+        yt = await extract_info(match.group(), download=False)
     else:
-        yt = await extract_info(ydl, f"ytsearch:{url_or_query}", download=False)
-        yt = yt["entries"][0]
+        yt = await extract_info(f"ytsearch:{url_or_query}", download=False,isSearch=True)
     
     for f in yt["formats"]:
         if f["format_id"] == "140" and f.get("filesize") is not None:
