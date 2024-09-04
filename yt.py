@@ -54,10 +54,9 @@ def download_media(idv, format, output_extension, tipo):
     if tipo == "video":
         ydl_command = [
             'yt-dlp',
+            '--cookies', 'cookies.txt',
             '-f', "b[filesize<50M] / w",
             '--max-filesize', '50M',
-            '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
-
             '-o', output_template,
             
             url
@@ -65,11 +64,10 @@ def download_media(idv, format, output_extension, tipo):
     else:
         ydl_command = [
             'yt-dlp',
+            '--cookies', 'cookies.txt',
             '-f', 'bestaudio[ext=m4a]',
             '--max-filesize', '50M',
             '--audio-format', 'mp3',
-            '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
-
             '-o', output_template,
             url
         ]
@@ -146,7 +144,7 @@ async def start_ytdl(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for f in yt["formats"]:
         if f["format_id"] == "140" and f.get("filesize") is not None:
             afsize = f["filesize"] or 0
-        print(f["format_id"], f["ext"], f.get("filesize"))
+        
         if f["ext"] == "mp4" and f.get("filesize") is not None:
             vfsize = f["filesize"] or 0
     
