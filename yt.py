@@ -110,26 +110,32 @@ async def process_queue(context: ContextTypes.DEFAULT_TYPE):
         update, url_or_query, format_type, output_extension = download_queue.popleft()
         chat_id = update.message.chat_id
 
-        await context.bot.send_message(chat_id=chat_id, text="Iniciando o download...")
+        # Enviar uma mensagem inicial e obter o ID para edição
+        sent_message = await context.bot.send_message(chat_id=chat_id, text="Iniciando o download...")
 
         filename, error = download_media(url_or_query, format_type, output_extension, format_type)
 
         if error:
-            await context.bot.send_message(chat_id=chat_id, text=error)
+            # Editar a mensagem em vez de enviar uma nova
+            await context.bot.edit_message_text(chat_id=chat_id, message_id=sent_message.message_id, text=error)
             shutil.rmtree(os.path.dirname(filename), ignore_errors=True)
         else:
-            await context.bot.send_message(chat_id=chat_id, text="Download concluído! Enviando arquivo...")
-            info = await get_info(url_or_query)
+            # Editar a mensagem para mostrar progresso
+            await context.bot.edit_message_text(chat_id=chat_id, message_id=sent_message.message_id, text="Download concluído! Enviando arquivo...")
+
             if format_type == 'video':
-                try :
+                try:
                     await context.bot.send_video(
                         chat_id=chat_id, 
                         video=open(filename, 'rb'),
-                        supports_streaming=True)
+                        supports_streaming=True
+                    )
+                    # Apagar a mensagem de status após o envio
+                    await context.bot.delete_message(chat_id=chat_id, message_id=sent_message.message_id)
                 except FileNotFoundError:
-                    await context.bot.send_message(chat_id=chat_id, text="Erro ao tentar baixar!")
-
+                    await context.bot.edit_message_text(chat_id=chat_id, message_id=sent_message.message_id, text="Erro ao tentar baixar!")
             else:
+                info = await get_info(url_or_query)
                 try:
                     thumb = io.BytesIO(httpx.get(info.thumb).content)
                     thumb.name = "thumbnail.png"
@@ -139,11 +145,16 @@ async def process_queue(context: ContextTypes.DEFAULT_TYPE):
                         audio=open(filename, 'rb'),
                         title=info.title,
                         performer=info.performer,
-                        thumbnail=thumb)
+                        thumbnail=thumb
+                    )
+                    # Apagar a mensagem de status após o envio
+                    await context.bot.delete_message(chat_id=chat_id, message_id=sent_message.message_id)
                 except FileNotFoundError:
-                    await context.bot.send_message(chat_id=chat_id, text="Erro ao tentar baixar!")
+                    await context.bot.edit_message_text(chat_id=chat_id, message_id=sent_message.message_id, text="Erro ao tentar baixar!")
 
             shutil.rmtree(os.path.dirname(filename))
+
+
             
 # Função para iniciar o download e adicionar à fila
 async def start_ytdl(update: Update, context: ContextTypes.DEFAULT_TYPE):
