@@ -42,17 +42,25 @@ MAX_FILESIZE = 200000000
 @aiowrap
 def extract_info(url: str, download=True, isSearch=False):
     command = [
-        "yt-dlp", "--no-playlist", "--dump-json", "--username","oauth2", "--password", "''",
-        url]
+        "yt-dlp", 
+        "--dump-json", 
+        "--username","oauth2", 
+        "--password", "''",
+        "--no-playlist", 
+        url
+    ]
     
     if isSearch:
         command = [
         "yt-dlp",
-        "--username","oauth2", "--password", "''","--default-search", url ,
-        "--no-playlist", "--dump-json", 
-        url]
+        "--dump-json", 
+        "--username","oauth2", 
+        "--password", "''",
+        "--default-search", url ,
+        "--no-playlist", 
+        url
+    ]
 
-    print(command)
     result = subprocess.run(command, capture_output=True, text=True)
     video_info = json.loads(result.stdout)
 
@@ -75,11 +83,9 @@ def download_media(idv, format, output_extension, tipo):
             'yt-dlp',
             "--username","oauth2", "--password", "''",
             '--no-playlist',
-            '--cookies', 'cookies.txt',
             '-f', "b[filesize<50M] / w",
             '--max-filesize', '50M',
             '-o', output_template,
-            
             url
         ]
     else:
@@ -87,7 +93,6 @@ def download_media(idv, format, output_extension, tipo):
             'yt-dlp',
             "--username","oauth2", "--password", "''",
             '--no-playlist',
-            '--cookies', 'cookies.txt',
             '-f', 'bestaudio[ext=m4a]',
             '--max-filesize', '50M',
             '--audio-format', 'mp3',
