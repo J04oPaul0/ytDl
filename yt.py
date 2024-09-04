@@ -116,7 +116,7 @@ def download_media(idv, format, output_extension, tipo):
     except subprocess.CalledProcessError as e:
         if "File is larger than max-filesize" in e.stderr:
             return None, "O conteúdo excede 50MB."
-        return None, "Erro ao baixar o conteúdo."
+        return None, e.stderr
     except Exception as e:
         return None, f"Erro inesperado: {str(e)}"
 
