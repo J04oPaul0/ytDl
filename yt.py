@@ -11,13 +11,13 @@ from yt_dlp import YoutubeDL
 import io
 import re
 from typing import TYPE_CHECKING
-
+from config import Config
 import asyncio
 from functools import partial, wraps
 
 from typesp.video import Video
 
-TOKEN_BOT = os.environ["YT_TOKEN_BOT"]
+app_config = Config()
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -153,8 +153,6 @@ async def process_queue(context: ContextTypes.DEFAULT_TYPE):
                     await context.bot.edit_message_text(chat_id=chat_id, message_id=sent_message.message_id, text="Erro ao tentar baixar!")
 
             shutil.rmtree(os.path.dirname(filename))
-
-
             
 # Função para iniciar o download e adicionar à fila
 async def start_ytdl(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -184,9 +182,7 @@ async def start_ytdl(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         if f["ext"] == "mp4" and f.get("filesize") is not None:
             vfsize = f["filesize"] or 0
-    
-
-    
+        
     keyboard = [
         [InlineKeyboardButton("Vídeo (MP4) 📹", callback_data=f"video|{yt["id"]}|mp4|{vfsize}")],
         [InlineKeyboardButton("Áudio (MP3) 🎵", callback_data=f"audio|{yt["id"]}|mp3|{afsize}")],
@@ -201,7 +197,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     format_type, url_or_query, output_extension, size = query.data.split('|')
     size = int(size)
-    if size>=MAX_FILESIZE:
+    if size >= MAX_FILESIZE:
         await query.edit_message_text("Não consigo baixar esse arquivo.")
         return    
     # Adiciona à fila
@@ -214,24 +210,14 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Mensagem de start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "🤖 Olá! Eu sou o bot de download de YouTube! \n\n"
-        "Use o comando /ytdl seguido de uma URL do YouTube ou texto para pesquisar e baixar o vídeo ou áudio desejado. "
-        "Eu vou te guiar pelo processo! 📥\n\n"
-        "Digite /help para mais informações."
-    )
+    await update.message.reply_text(app_config.TEXT_START)
 
 # Mensagem de ajuda
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "ℹ️ **Comandos disponíveis:**\n\n"
-        "🔹 /start - Inicia o bot e mostra esta mensagem.\n"
-        "🔹 /ytdl <URL ou Texto> - Baixa o vídeo ou áudio do YouTube de acordo com sua escolha.\n\n"
-        "Depois de escolher o formato, o download será adicionado à fila. Você será notificado quando o arquivo estiver pronto!"
-    )
+    await update.message.reply_text(app_config.TEXT_HELP)
 
 def main():
-    application = ApplicationBuilder().token(TOKEN_BOT).build()
+    application = ApplicationBuilder().token(app_config.TOKEN_BOT).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
