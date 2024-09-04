@@ -44,6 +44,7 @@ def extract_info(url: str, download=True, isSearch=False):
     command = [
         "yt-dlp", 
         "--dump-json", 
+        "--no-download",
         "--username","oauth2", 
         "--password", "''",
         "--no-playlist", 
@@ -53,15 +54,17 @@ def extract_info(url: str, download=True, isSearch=False):
     if isSearch:
         command = [
         "yt-dlp",
-        "--dump-json", 
+        "--dump-json",
+        "--no-download",
         "--username","oauth2", 
         "--password", "''",
         "--default-search", url ,
         "--no-playlist", 
         url
     ]
-
+        
     result = subprocess.run(command, capture_output=True, text=True)
+    print(' '.join(command), result)
     video_info = json.loads(result.stdout)
 
     return video_info
