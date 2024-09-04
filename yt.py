@@ -126,7 +126,7 @@ async def start_ytdl(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     url_or_query = " ".join(context.args)
-    ydl = YoutubeDL({"noplaylist": True})
+    ydl = YoutubeDL({"noplaylist": True, 'cookiefile':"cookies.txt"})
 
     match = YOUTUBE_REGEX.match(url_or_query)
 
